@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Radiciação Ninja – 8º Ano | BNCC EF08MA03</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#020f09;font-family:'DM Sans',sans-serif;overflow-x:hidden}
+#root{min-height:100vh}
+input::placeholder{color:#444}
+button:active{transform:scale(0.96)}
+.bg-geo{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;opacity:0.07}
+@keyframes floatUp{0%{transform:translateY(110vh) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:.5}100%{transform:translateY(-10vh) rotate(360deg);opacity:0}}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.slide-up{animation:slideUp 0.4s ease forwards}
+.shake{animation:shake 0.4s ease}
+</style>
+</head>
+<body>
+<div class="bg-geo" id="bg"></div>
+<div id="root"></div>
+<script>
+const bg=document.getElementById('bg');
+const syms=['√','∛','²','³','√4','√9','∜','√16','√25','√'];
+for(let i=0;i<20;i++){
+  const s=document.createElement('div');
+  s.textContent=syms[Math.floor(Math.random()*syms.length)];
+  s.style.cssText=`position:absolute;font-size:${Math.random()*26+14}px;left:${Math.random()*100}%;color:#10b981;font-weight:900;animation:floatUp ${Math.random()*14+8}s linear ${Math.random()*8}s infinite`;
+  bg.appendChild(s);
+}
+</script>
+<script type="text/babel">
+const{useState,useEffect,useCallback}=React;
+
+const COR='#10b981';
+const COR2='#059669';
+const GRAD='linear-gradient(135deg,#022c22,#065f46,#10b981)';
+const BG='#020f09';
+
+const VERSICULOS=[
+  {ref:"Eclesiastes 9.10",txt:'"Tudo o que voce tiver de fazer, faca-o com toda a sua forca; porque no alem, para onde voce vai, nao ha obra, nem projeto, nem conhecimento, nem sabedoria."'},
+  {ref:"Colossenses 3.23",txt:'"E tudo quanto fizerdes, fazei-o de todo o coracao, como ao Senhor, e nao aos homens."'},
+  {ref:"Proverbios 9.10", txt:'"O temor do SENHOR e o principio da sabedoria, e o conhecimento do Santo e entendimento."'},
+];
+
+const BNCC={cod:"EF08MA03",desc:"Resolver e elaborar problemas que envolvam radiciacao, identificar raizes exatas e aplicar em situacoes geometricas.",campo:"Numeros",ano:"8o Ano"};
+
+const CREDITS={
+  nome:"Telma Antonia Alves da Silva",
+  curso:"Licenciatura em Matematica – EaD",
+  disciplina:"Estagio Supervisionado II",
+  orientador:"Prof. Orientador: Bruno Coelho",
+  regente:"Prof. Regente: Lillian Ferreira Tavares de Louredo Reis",
+  nivel:"Ensino Fundamental – Anos Finais | 8o Ano | 2o Bimestre 2026",
+};
+
+const LEVELS=[
+  {name:"Facil",   timeLimit:45,points:10,label:"Raizes basicas"},
+  {name:"Medio",   timeLimit:35,points:20,label:"Calculos e aplicacoes"},
+  {name:"Dificil", timeLimit:25,points:30,label:"Problemas avancados"},
+];
+
+const TEMAS=[
+  {id:"raiz_q",  label:"Raiz Quadrada", color:"#10b981", emoji:"√"},
+  {id:"raiz_c",  label:"Raiz Cubica",   color:"#34d399", emoji:"∛"},
+  {id:"aplic",   label:"Aplicacoes",    color:"#6ee7b7", emoji:"📐"},
+  {id:"pitag",   label:"Pitagoras",     color:"#a7f3d0", emoji:"▲"},
+];
+
+function ri(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function round2(n){return Math.round(n*100)/100;}
+
+const RAIZES_Q=[4,9,16,25,36,49,64,81,100,121,144,169,196,225,256];
+const RAIZES_C=[8,27,64,125,216,343,1000];
+
+function gerarQuestao(level,tema){
+  let enunciado,resposta,choices,emoji,dica="";
+
+  if(tema==="raiz_q"){
+    if(level===0){
+      const idx=ri(0,8);
+      const r=RAIZES_Q[idx];
+      const sq=Math.sqrt(r);
+      enunciado=`Qual e a raiz quadrada exata de ${r}?`;
+      resposta=sq; emoji="√"; dica=`${sq} x ${sq} = ${r}`;
+    } else if(level===1){
+      const idx=ri(0,RAIZES_Q.length-1);
+      const r=RAIZES_Q[idx];
+      const sq=Math.round(Math.sqrt(r));
+      enunciado=`Calcule: √${r} + √${RAIZES_Q[Math.min(idx+1,RAIZES_Q.length-1)]}`;
+      const r2=RAIZES_Q[Math.min(idx+1,RAIZES_Q.length-1)];
+      resposta=sq+Math.round(Math.sqrt(r2));
+      emoji="√"; dica=`√${r}=${sq}, √${r2}=${Math.round(Math.sqrt(r2))}`;
+    } else {
+      const l=ri(3,12);
+      enunciado=`Um quadrado tem area de ${l*l} m². Qual e o lado?`;
+      resposta=l; emoji="◼"; dica=`lado = √${l*l}`;
+    }
+  } else if(tema==="raiz_c"){
+    if(level===0){
+      const idx=ri(0,RAIZES_C.length-1);
+      const r=RAIZES_C[idx];
+      const cr=Math.round(Math.cbrt(r));
+      enunciado=`Qual e a raiz cubica exata de ${r}?`;
+      resposta=cr; emoji="∛"; dica=`${cr} x ${cr} x ${cr} = ${r}`;
+    } else if(level===1){
+      const idx=ri(0,4);
+      const r=RAIZES_C[idx];
+      const cr=Math.round(Math.cbrt(r));
+      enunciado=`Calcule: ∛${r} x 2`;
+      resposta=cr*2; emoji="∛"; dica=`∛${r} = ${cr}, entao ${cr} x 2`;
+    } else {
+      const a=ri(2,7);
+      enunciado=`Um cubo tem volume de ${a*a*a} cm³. Qual e a aresta?`;
+      resposta=a; emoji="📦"; dica=`aresta = ∛${a*a*a}`;
+    }
+  } else if(tema==="aplic"){
+    const casos=[
+      // Facil
+      {e:"Uma sala quadrada tem area de 81 m². Qual e a medida do lado?",r:9,em:"🏠",d:"lado = √81"},
+      {e:"Um azulejo quadrado tem area de 25 cm². Qual e o comprimento do lado?",r:5,em:"🔲",d:"lado = √25"},
+      {e:"Uma tela quadrada tem area de 64 cm². Qual e o seu lado?",r:8,em:"📺",d:"lado = √64"},
+      // Medio
+      {e:"Uma piscina quadrada tem area de 144 m². Qual e o seu lado?",r:12,em:"🏊",d:"lado = √144 = 12"},
+      {e:"Um terreno quadrado tem area de 196 m². Qual e a medida do lado?",r:14,em:"🌳",d:"lado = √196 = 14"},
+      {e:"Uma placa quadrada tem area de 225 cm². Qual e o seu lado?",r:15,em:"🪟",d:"lado = √225 = 15"},
+      // Dificil
+      {e:"Um jardim quadrado tem perimetro de 48 m. Qual e a sua area?",r:144,em:"🌺",d:"P=48, lado=12, A=12²=144"},
+      {e:"Se dobramos o lado de um quadrado, sua area multiplica por quanto?",r:4,em:"◼",d:"Novo lado = 2L, nova area = 4L²"},
+    ];
+    const idx=level===0?ri(0,2):level===1?ri(3,5):ri(6,7);
+    const c=casos[idx];
+    enunciado=c.e; resposta=c.r; emoji=c.em; dica=c.d;
+  } else { // pitagoras
+    const trips=[[3,4,5],[5,12,13],[6,8,10],[8,15,17],[9,12,15],[7,24,25]];
+    const t=trips[ri(0,trips.length-1)];
+    if(level===0){
+      enunciado=`Num triangulo retangulo com catetos ${t[0]} e ${t[1]}, qual e a hipotenusa?`;
+      resposta=t[2]; emoji="▲"; dica=`h = √(${t[0]}² + ${t[1]}²) = √(${t[0]*t[0]+t[1]*t[1]})`;
+    } else if(level===1){
+      enunciado=`Num triangulo retangulo, a hipotenusa e ${t[2]} e um cateto e ${t[0]}. Qual e o outro cateto?`;
+      resposta=t[1]; emoji="▲"; dica=`b = √(${t[2]}² - ${t[0]}²) = √(${t[2]*t[2]-t[0]*t[0]})`;
+    } else {
+      const mult=ri(2,4);
+      enunciado=`Num triangulo retangulo com catetos ${t[0]*mult} e ${t[1]*mult}, qual e a hipotenusa?`;
+      resposta=t[2]*mult; emoji="▲"; dica=`Triangulo ${t[0]}-${t[1]}-${t[2]} multiplicado por ${mult}`;
+    }
+  }
+
+  // Alternativas
+  const ws=[];let att=0;
+  while(ws.length<3&&att<80){
+    att++;
+    const delta=Math.max(1,ri(1,Math.max(2,Math.floor(Math.abs(resposta)*0.3)||2)));
+    const sign=Math.random()<0.5?1:-1;
+    const w=round2(resposta+sign*delta);
+    if(w!==resposta&&w>0&&!ws.includes(w))ws.push(w);
+  }
+  const ch=[...ws,resposta].sort(()=>Math.random()-0.5);
+  return{enunciado,resposta,choices:ch,emoji,tema,dica};
+}
+
+const LS_KEY="radicacaoNinja_hist";
+function loadH(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch{return[];}}
+function saveH(h){try{localStorage.setItem(LS_KEY,JSON.stringify(h));}catch{}}
+function clearH(){try{localStorage.removeItem(LS_KEY);}catch{}}
+
+function doPrint({studentName,finalScore,correctCount,wrongCount,maxStreak,level,selTemas,history,TOTAL,date}){
+  date=date||new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+  const pct=Math.round((correctCount/TOTAL)*100);
+  const nota=(correctCount/TOTAL)*10;
+  const medal=nota>=9?"Excelente":nota>=7?"Muito Bom":nota>=5?"Bom":"Em Desenvolvimento";
+  const temasUsados=selTemas.map(t=>TEMAS.find(x=>x.id===t)?.label).join(", ");
+  const rows=history.map((h,i)=>{
+    const tInfo=TEMAS.find(t=>t.id===h.tema);
+    return`<tr style="background:${i%2===0?"#f8fafc":"#fff"}">
+      <td style="padding:6px 8px;text-align:center;font-weight:700">${i+1}</td>
+      <td style="padding:6px 8px"><span style="background:${tInfo?.color||"#10b981"}22;color:${tInfo?.color||"#10b981"};padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700">${tInfo?.emoji} ${tInfo?.label}</span></td>
+      <td style="padding:6px 8px;font-size:11px">${h.enunciado}</td>
+      <td style="padding:6px 8px;text-align:center;font-weight:800;color:#059669">${h.resposta}</td>
+      <td style="padding:6px 8px;text-align:center;font-size:14px">${h.result==="correct"?"✅":"❌"}</td>
+    </tr>`;
+  }).join("");
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resultado – Radiciacao Ninja</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#fff;color:#1e293b;padding:28px;max-width:750px;margin:0 auto}
+.header{text-align:center;border-bottom:3px solid #10b981;padding-bottom:12px;margin-bottom:16px}
+h1{font-size:20px;font-weight:900;color:#059669;font-family:'Syne',sans-serif}
+.sub{color:#64748b;font-size:11px}.section{margin-bottom:14px}
+h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin:0 0 6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px}
+.box .lbl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px}
+.box .val{font-size:15px;font-weight:800;color:#1e293b;margin-top:1px;font-family:'Syne',sans-serif}
+.big{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#022c22,#059669,#10b981);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:12px}
+.big .pts{font-size:42px;font-weight:900;line-height:1;font-family:'Syne',sans-serif}
+.big .medal{font-size:15px;font-weight:700;margin-bottom:2px}.big .sub2{font-size:10px;opacity:.8}.big .nota{font-size:11px;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead tr{background:#10b981;color:#fff}
+th{padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700}
+td{border-bottom:1px solid #e2e8f0;vertical-align:middle}
+.footer-p{border-top:2px solid #e2e8f0;padding-top:10px;margin-top:16px;text-align:center;font-size:10px;color:#94a3b8;line-height:1.8}
+.sname{font-size:17px;font-weight:800;font-family:'Syne',sans-serif}
+.signature{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.sign-box{text-align:center;border-top:1px solid #94a3b8;padding-top:6px;font-size:10px;color:#475569}
+.badge{display:inline-block;background:#10b981;color:#fff;font-weight:800;font-size:11px;padding:3px 12px;border-radius:99px;font-family:'Syne',sans-serif;margin-bottom:6px}
+@media print{body{padding:12px}}
+</style></head><body>
+<div class="header">
+  <div style="font-size:34px;margin-bottom:4px">√</div>
+  <div class="badge">Radiciacão Ninja – 8o Ano</div>
+  <h1>Relatorio de Desempenho Individual</h1>
+  <div class="sub">${date} · Prof. Lillian Ferreira Tavares de Louredo Reis</div>
+</div>
+<div class="section"><h3>Identificacao</h3>
+  <div class="box"><div class="lbl">Nome</div><div class="sname">${studentName}</div></div>
+</div>
+<div class="big">
+  <div class="pts">${finalScore}</div>
+  <div><div class="medal">${medal}</div><div class="sub2">pontos obtidos</div><div class="nota">Nota: ${nota.toFixed(1)} / 10,0</div></div>
+</div>
+<div class="section"><h3>Desempenho</h3>
+  <div class="grid3">
+    <div class="box"><div class="lbl">Acertos</div><div class="val" style="color:#16a34a">${correctCount} ✅</div></div>
+    <div class="box"><div class="lbl">Erros</div><div class="val" style="color:#dc2626">${wrongCount} ❌</div></div>
+    <div class="box"><div class="lbl">Aproveitamento</div><div class="val" style="color:${pct>=70?"#16a34a":pct>=50?"#d97706":"#dc2626"}">${pct}%</div></div>
+  </div>
+  <div class="grid2" style="margin-top:6px">
+    <div class="box"><div class="lbl">Nivel</div><div class="val">${LEVELS[level].name}</div></div>
+    <div class="box"><div class="lbl">Sequencia max.</div><div class="val">${maxStreak} 🔥</div></div>
+    <div class="box"><div class="lbl">Temas</div><div class="val" style="font-size:10px">${temasUsados}</div></div>
+    <div class="box"><div class="lbl">Total questoes</div><div class="val">${TOTAL}</div></div>
+  </div>
+</div>
+<div class="section"><h3>Historico de Questoes</h3>
+  <table><thead><tr><th style="width:28px">#</th><th style="width:110px">Tema</th><th>Questao</th><th style="width:70px;text-align:center">Resposta</th><th style="width:36px;text-align:center">Res.</th></tr></thead>
+  <tbody>${rows}</tbody></table>
+</div>
+<div class="section"><h3>Alinhamento BNCC</h3>
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px">
+    <span style="background:#10b981;color:#fff;font-weight:800;font-size:11px;padding:2px 10px;border-radius:99px;font-family:'Syne',sans-serif">${BNCC.cod}</span>
+    <span style="color:#059669;font-size:10px;font-weight:600;margin-left:6px">${BNCC.campo} · ${BNCC.ano}</span>
+    <p style="color:#475569;font-size:10px;line-height:1.5;margin-top:6px">${BNCC.desc}</p>
+  </div>
+</div>
+<div class="signature">
+  <div class="sign-box">Assinatura do(a) Aluno(a)<br><strong>${studentName}</strong></div>
+  <div class="sign-box">Prof. Regente<br><strong>Lillian Ferreira Tavares de Louredo Reis</strong></div>
+</div>
+<div class="footer-p">
+  <strong>${CREDITS.nome}</strong><br>
+  ${CREDITS.curso} · ${CREDITS.disciplina}<br>
+  ${CREDITS.orientador} · ${CREDITS.regente}<br>
+  ${CREDITS.nivel} · Deus e tudo que nos temos ✝
+</div>
+<script>window.onload=()=>window.print()<\/script>
+</body></html>`);
+  win.document.close();
+}
+
+function TelaHistorico({onBack}){
+  const[hist,setHist]=useState(loadH());
+  const[conf,setConf]=useState(false);
+  return(
+    <div style={{minHeight:"100vh",background:BG,display:"flex",flexDirection:"column",alignItems:"center",padding:16,position:"relative",zIndex:1}}>
+      <div style={{width:"100%",maxWidth:480}} className="slide-up">
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+          <button onClick={onBack} style={{background:`${COR}18`,border:`1px solid ${COR}40`,borderRadius:9,padding:"7px 13px",color:COR,fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"'Syne',sans-serif"}}>← Voltar</button>
+          <h2 style={{color:"#fff",fontSize:17,fontWeight:900,flex:1,fontFamily:"'Syne',sans-serif"}}>📊 Historico de Alunos</h2>
+          {hist.length>0&&<button onClick={()=>setConf(true)} style={{background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:9,padding:"6px 12px",color:"#f87171",fontSize:11,cursor:"pointer",fontWeight:700}}>🗑️ Limpar</button>}
+        </div>
+        {conf&&(
+          <div style={{position:"fixed",top:0,left:0,width:"100%",height:"100%",background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999}}>
+            <div style={{background:"#022c22",border:`1px solid ${COR}60`,borderRadius:16,padding:24,maxWidth:300,width:"90%",textAlign:"center"}}>
+              <div style={{fontSize:38,marginBottom:8}}>🗑️</div>
+              <p style={{color:"#fff",fontSize:14,fontWeight:700,marginBottom:6,fontFamily:"'Syne',sans-serif"}}>Apagar historico?</p>
+              <p style={{color:"#555",fontSize:11,marginBottom:16}}>Esta acao nao pode ser desfeita.</p>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setConf(false)} style={{flex:1,padding:"9px",borderRadius:9,border:"1px solid rgba(255,255,255,0.1)",background:"transparent",color:"#555",fontSize:12,fontWeight:700,cursor:"pointer"}}>Cancelar</button>
+                <button onClick={()=>{clearH();setHist([]);setConf(false);}} style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:"#f87171",color:"#fff",fontSize:12,fontWeight:800,cursor:"pointer"}}>Apagar tudo</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {hist.length===0?(
+          <div style={{textAlign:"center",padding:"36px 20px"}}>
+            <div style={{fontSize:44,marginBottom:10}}>📭</div>
+            <p style={{color:"#555",fontSize:13}}>Nenhuma sessao registrada ainda.</p>
+          </div>
+        ):(
+          <div>
+            <div style={{background:`${COR}08`,border:`1px solid ${COR}20`,borderRadius:14,padding:13,marginBottom:13}}>
+              <p style={{color:COR,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:9,fontFamily:"'Syne',sans-serif"}}>🏆 Ranking</p>
+              {[...hist].sort((a,b)=>b.finalScore-a.finalScore).slice(0,8).map((s,i)=>{
+                const medals=["🥇","🥈","🥉"];
+                const med=i<3?medals[i]:(i+1)+"o";
+                const nota=((s.correctCount/s.TOTAL)*10).toFixed(1);
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:i<Math.min(hist.length,8)-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
+                    <span style={{width:22,textAlign:"center",fontSize:13}}>{med}</span>
+                    <div style={{flex:1}}>
+                      <div style={{color:"#e2e8f0",fontSize:12,fontWeight:700}}>{s.studentName}</div>
+                      <div style={{color:"#444",fontSize:9}}>{s.date} · {s.levelName}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{color:COR,fontSize:13,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>{s.finalScore} pts</div>
+                      <div style={{color:"#555",fontSize:9}}>Nota {nota}/10</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {[...hist].reverse().map((s,i)=>{
+              const nota=((s.correctCount/s.TOTAL)*10).toFixed(1);
+              const pct=Math.round((s.correctCount/s.TOTAL)*100);
+              return(
+                <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:12,marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}>
+                    <div>
+                      <div style={{color:"#fff",fontSize:13,fontWeight:700}}>{s.studentName}</div>
+                      <div style={{color:"#444",fontSize:9}}>{s.date} · {s.levelName}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{color:COR,fontSize:15,fontWeight:900,fontFamily:"'Syne',sans-serif"}}>{s.finalScore} pts</div>
+                      <div style={{color:"#555",fontSize:9}}>Nota {nota}/10</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:4,marginBottom:7,flexWrap:"wrap"}}>
+                    {s.history&&s.history.map((h,j)=>(
+                      <div key={j} style={{width:24,height:24,borderRadius:5,background:h.result==="correct"?`${COR}25`:"rgba(248,113,113,0.15)",border:`1px solid ${h.result==="correct"?COR:"#f87171"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10}}>
+                        {h.result==="correct"?"✅":"❌"}
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={()=>doPrint({...s,selTemas:s.selTemas||["raiz_q","raiz_c","aplic","pitag"]})} style={{width:"100%",padding:"7px",borderRadius:8,border:`1px solid ${COR}30`,background:`${COR}08`,color:COR,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"'Syne',sans-serif"}}>
+                    🖨️ Imprimir Resultado desta Sessao
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Footer(){
+  return(
+    <footer style={{width:"100%",maxWidth:520,marginTop:16,borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:11,paddingBottom:7,textAlign:"center",position:"relative",zIndex:1}}>
+      <div style={{display:"flex",flexDirection:"column",gap:3,alignItems:"center"}}>
+        <span style={{color:COR,fontSize:12,fontWeight:700,fontFamily:"'Syne',sans-serif"}}>👩‍🎓 {CREDITS.nome}</span>
+        <span style={{color:"#444",fontSize:10}}>{CREDITS.curso} · {CREDITS.disciplina}</span>
+        <span style={{color:"#444",fontSize:10}}>{CREDITS.orientador} · {CREDITS.regente}</span>
+        <span style={{color:"#333",fontSize:9}}>{CREDITS.nivel} · Deus e tudo que nos temos ✝</span>
+      </div>
+    </footer>
+  );
+}
+
+function App(){
+  const[screen,setScreen]=useState("menu");
+  const[level,setLevel]=useState(0);
+  const[selTemas,setSelTemas]=useState(["raiz_q","raiz_c","aplic","pitag"]);
+  const[question,setQuestion]=useState(null);
+  const[score,setScore]=useState(0);
+  const[livesLeft,setLivesLeft]=useState(3);
+  const[round,setRound]=useState(0);
+  const[timeLeft,setTimeLeft]=useState(45);
+  const[feedback,setFeedback]=useState(null);
+  const[answered,setAnswered]=useState(false);
+  const[streak,setStreak]=useState(0);
+  const[maxStreak,setMaxStreak]=useState(0);
+  const[bestScore,setBestScore]=useState(0);
+  const TOTAL=10;
+  const[studentName,setStudentName]=useState("");
+  const[correctCount,setCorrectCount]=useState(0);
+  const[wrongCount,setWrongCount]=useState(0);
+  const[finalScore,setFinalScore]=useState(0);
+  const[showBncc,setShowBncc]=useState(false);
+  const[history,setHistory]=useState([]);
+  const[sessionDate,setSessionDate]=useState("");
+  const[shake,setShake]=useState(false);
+
+  const pickQ=useCallback(()=>{
+    const tema=selTemas[Math.floor(Math.random()*selTemas.length)];
+    return gerarQuestao(level,tema);
+  },[level,selTemas]);
+
+  useEffect(()=>{
+    if(screen!=="game"||answered)return;
+    if(timeLeft<=0){handleAnswer(null);return;}
+    const t=setTimeout(()=>setTimeLeft(v=>v-1),1000);
+    return()=>clearTimeout(t);
+  },[timeLeft,screen,answered]);
+
+  function startGame(){
+    if(!studentName.trim()||selTemas.length===0)return;
+    setScore(0);setLivesLeft(3);setRound(0);setStreak(0);setMaxStreak(0);
+    setCorrectCount(0);setWrongCount(0);setHistory([]);
+    const now=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    setSessionDate(now);
+    const q=pickQ();setQuestion(q);setTimeLeft(LEVELS[level].timeLimit);
+    setFeedback(null);setAnswered(false);setScreen("game");
+  }
+
+  function handleAnswer(choice){
+    if(answered)return;
+    setAnswered(true);
+    const ok=choice!==null&&String(choice)===String(question.resposta);
+    let ns=score,nl=livesLeft,nst=streak,nms=maxStreak,nc=correctCount,nw=wrongCount;
+    if(ok){nst++;if(nst>nms)nms=nst;const bonus=nst>=3?Math.floor(LEVELS[level].points*0.5):0;ns+=LEVELS[level].points+bonus;nc++;setFeedback("correct");}
+    else{nst=0;nl--;nw++;setFeedback("wrong");setShake(true);setTimeout(()=>setShake(false),500);}
+    setStreak(nst);setMaxStreak(nms);setScore(ns);setLivesLeft(nl);setCorrectCount(nc);setWrongCount(nw);
+    const newHist=[...history,{...question,result:ok?"correct":"wrong"}];
+    setHistory(newHist);
+    setTimeout(()=>{
+      const nr=round+1;
+      if(nr>=TOTAL||nl<=0){
+        setBestScore(b=>Math.max(b,ns));setFinalScore(ns);
+        const sessao={studentName,finalScore:ns,correctCount:nc,wrongCount:nw,maxStreak:nms,level,levelName:LEVELS[level].name,selTemas,history:newHist,TOTAL,date:sessionDate};
+        const h=loadH();h.push(sessao);saveH(h);setScreen("result");
+      }else{setRound(nr);const q=pickQ();setQuestion(q);setTimeLeft(LEVELS[level].timeLimit);setFeedback(null);setAnswered(false);}
+    },1500);
+  }
+
+  function toggleTema(t){setSelTemas(ts=>ts.includes(t)?(ts.length>1?ts.filter(x=>x!==t):ts):[...ts,t]);}
+  function copyLink(){navigator.clipboard.writeText(window.location.href).then(()=>alert("✅ Link copiado!"));}
+  if(screen==="historico") return <TelaHistorico onBack={()=>setScreen("menu")}/>;
+
+  const tInfo=question?TEMAS.find(t=>t.id===question.tema):null;
+  const timerPct=question?(timeLeft/LEVELS[level].timeLimit)*100:100;
+  const timerCol=timerPct>50?COR:timerPct>25?"#f59e0b":"#f43f5e";
+  const canStart=studentName.trim()&&selTemas.length>0;
+  const base={minHeight:"100vh",background:BG,fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",padding:16,position:"relative",zIndex:1};
+
+  if(screen==="menu") return(
+    <div style={{...base,justifyContent:"center"}}>
+      <div style={{width:"100%",maxWidth:480,textAlign:"center"}} className="slide-up">
+        <div style={{background:`${COR}08`,border:`1px solid ${COR}18`,borderRadius:16,padding:14,marginBottom:14,textAlign:"left"}}>
+          <p style={{color:COR,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,textAlign:"center",fontFamily:"'Syne',sans-serif"}}>✝️ Deus e tudo que nos temos</p>
+          {VERSICULOS.map((v,i)=>(
+            <div key={i} style={{borderLeft:`2px solid ${COR}50`,paddingLeft:10,marginBottom:8}}>
+              <p style={{color:"#6ee7b7",fontSize:11,lineHeight:1.65,margin:"0 0 2px",fontStyle:"italic"}}>{v.txt}</p>
+              <p style={{color:COR,fontSize:10,fontWeight:700,margin:0,fontFamily:"'Syne',sans-serif"}}>— {v.ref}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{background:GRAD,borderRadius:16,padding:"14px 20px",marginBottom:14,textAlign:"center"}}>
+          <div style={{fontSize:44,marginBottom:4,filter:`drop-shadow(0 0 16px ${COR}80)`}}>√</div>
+          <h1 style={{fontSize:28,fontWeight:900,color:"#fff",margin:"0 0 3px",letterSpacing:-1,fontFamily:"'Syne',sans-serif"}}>Radiciacao <span style={{color:"#fbbf24"}}>Ninja</span></h1>
+          <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,margin:0}}>8o Ano · 2o Bimestre · BNCC EF08MA03</p>
+          {bestScore>0&&<p style={{color:"#fbbf24",fontSize:11,marginTop:4}}>🏆 Recorde: {bestScore} pts</p>}
+        </div>
+        <div style={{display:"flex",gap:7,marginBottom:12}}>
+          <button onClick={copyLink} style={{flex:1,padding:"9px",borderRadius:11,border:"none",background:GRAD,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Syne',sans-serif"}}>🔗 Copiar Link</button>
+          <button onClick={()=>setScreen("historico")} style={{flex:1,padding:"9px",borderRadius:11,border:`1px solid ${COR}30`,background:`${COR}10`,color:COR,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'Syne',sans-serif"}}>📊 Historico ({loadH().length})</button>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:13,padding:13,marginBottom:11,textAlign:"left"}}>
+          <p style={{color:COR,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:7,fontFamily:"'Syne',sans-serif"}}>📋 Sobre o App</p>
+          <p style={{color:"#aaa",fontSize:12,lineHeight:1.7,margin:"0 0 8px"}}>O <strong style={{color:"#fff"}}>Radiciacao Ninja</strong> cobre os conteudos de <strong style={{color:COR}}>Radicacao</strong> do 2o Bimestre: raiz quadrada, raiz cubica, aplicacoes geometricas e Teorema de Pitagoras.</p>
+          <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+            {TEMAS.map((t,i)=>(
+              <span key={i} style={{background:`${t.color}15`,border:`1px solid ${t.color}30`,borderRadius:99,padding:"3px 10px",color:t.color,fontSize:10,fontWeight:700}}>{t.emoji} {t.label}</span>
+            ))}
+          </div>
+        </div>
+        <button onClick={()=>setShowBncc(v=>!v)} style={{background:`${COR}10`,border:`1px solid ${COR}25`,borderRadius:99,padding:"4px 14px",color:COR,fontSize:11,fontWeight:700,cursor:"pointer",marginBottom:10,fontFamily:"'Syne',sans-serif"}}>
+          📚 BNCC {BNCC.cod} {showBncc?"▲":"▼"}
+        </button>
+        {showBncc&&(
+          <div style={{background:`${COR}06`,border:`1px solid ${COR}15`,borderRadius:12,padding:12,marginBottom:11,textAlign:"left"}}>
+            <p style={{color:COR,fontSize:10,fontWeight:700,marginBottom:4}}>{BNCC.campo} · {BNCC.ano}</p>
+            <p style={{color:"#555",fontSize:11,lineHeight:1.5}}>{BNCC.desc}</p>
+          </div>
+        )}
+        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:11,padding:11,marginBottom:8}}>
+          <p style={{color:"#555",fontSize:10,marginBottom:5,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>Nome do Aluno(a)</p>
+          <input type="text" placeholder="Digite seu nome completo..." value={studentName} onChange={e=>setStudentName(e.target.value)}
+            style={{width:"100%",padding:"9px 11px",borderRadius:7,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:11,padding:11,marginBottom:8}}>
+          <p style={{color:"#555",fontSize:10,marginBottom:5,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>Nivel de Dificuldade</p>
+          <div style={{display:"flex",gap:6}}>
+            {LEVELS.map((l,i)=>(
+              <button key={i} onClick={()=>setLevel(i)} style={{flex:1,padding:"8px 3px",borderRadius:8,border:level===i?`2px solid ${COR}`:"2px solid transparent",background:level===i?`${COR}18`:"rgba(255,255,255,0.03)",color:level===i?COR:"#555",cursor:"pointer",fontWeight:700,fontSize:11,transition:"all 0.2s",fontFamily:"'Syne',sans-serif"}}>
+                {l.name}<div style={{fontSize:8,marginTop:1,opacity:.7}}>{l.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:11,padding:11,marginBottom:14}}>
+          <p style={{color:"#555",fontSize:10,marginBottom:5,textTransform:"uppercase",letterSpacing:1.5,fontWeight:600}}>Temas de Radicacao</p>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {TEMAS.map(t=>(
+              <button key={t.id} onClick={()=>toggleTema(t.id)} style={{flex:1,minWidth:80,padding:"9px 4px",borderRadius:8,border:selTemas.includes(t.id)?`2px solid ${t.color}`:"2px solid transparent",background:selTemas.includes(t.id)?`${t.color}15`:"rgba(255,255,255,0.03)",color:selTemas.includes(t.id)?t.color:"#555",cursor:"pointer",fontWeight:700,fontSize:13,transition:"all 0.2s"}}>
+                <div style={{fontSize:16,marginBottom:2}}>{t.emoji}</div>
+                <div style={{fontSize:8}}>{t.label}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+        <button onClick={startGame} disabled={!canStart} style={{width:"100%",padding:"13px",borderRadius:11,border:"none",background:canStart?GRAD:"rgba(99,99,99,0.2)",color:canStart?"#fff":"#333",fontSize:15,fontWeight:900,cursor:canStart?"pointer":"not-allowed",fontFamily:"'Syne',sans-serif",transition:"all 0.3s",boxShadow:canStart?`0 8px 24px ${COR}40`:"none"}}>
+          √ Comecar Jogo
+        </button>
+        {!studentName.trim()&&<p style={{color:"#f87171",fontSize:10,marginTop:4}}>⚠️ Digite seu nome para comecar</p>}
+        <p style={{color:"#333",fontSize:10,marginTop:5}}>{TOTAL} rodadas · {LEVELS[level].timeLimit}s por questao · 💾 salvo automaticamente</p>
+      </div>
+      <Footer/>
+    </div>
+  );
+
+  if(screen==="result"){
+    const pct=Math.round((correctCount/TOTAL)*100);
+    const nota=(correctCount/TOTAL)*10;
+    const medal=nota>=9?"🏆 Excelente!":nota>=7?"🥈 Muito Bom!":nota>=5?"🥉 Bom trabalho!":"💪 Continue tentando!";
+    const icon=nota>=9?"🏆":nota>=7?"🥈":nota>=5?"🥉":"💪";
+    return(
+      <div style={{...base,justifyContent:"center"}}>
+        <div style={{width:"100%",maxWidth:460}} className="slide-up">
+          <div style={{textAlign:"center",marginBottom:12}}>
+            <div style={{fontSize:44,marginBottom:4}}>{icon}</div>
+            <h2 style={{color:"#fff",fontSize:20,fontWeight:900,margin:"0 0 3px",fontFamily:"'Syne',sans-serif"}}>{medal}</h2>
+            <p style={{color:COR,fontSize:13,fontWeight:700}}>👤 {studentName}</p>
+            <p style={{color:"#444",fontSize:11}}>8o Ano · BNCC {BNCC.cod} · {sessionDate}</p>
+            <p style={{color:COR,fontSize:11,marginTop:3}}>💾 Sessao salva no historico!</p>
+          </div>
+          <div style={{background:GRAD,borderRadius:14,padding:"13px 18px",marginBottom:11,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:9,textTransform:"uppercase",letterSpacing:1}}>Nota</div>
+              <div style={{color:"#fff",fontSize:34,fontWeight:900,lineHeight:1,fontFamily:"'Syne',sans-serif"}}>{nota.toFixed(1)}</div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:9}}>/10,0</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:9,textTransform:"uppercase",letterSpacing:1}}>Pontuacao</div>
+              <div style={{color:"#fbbf24",fontSize:24,fontWeight:900,fontFamily:"'Syne',sans-serif"}}>{finalScore} pts</div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:9}}>Aproveitamento: {pct}%</div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:11}}>
+            {[{label:"Acertos",value:correctCount+" ✅",color:COR},{label:"Erros",value:wrongCount+" ❌",color:"#f87171"},{label:"Seq. max.",value:maxStreak+" 🔥",color:"#fbbf24"},{label:"Recorde",value:bestScore+" pts",color:"#34d399"}].map((s,i)=>(
+              <div key={i} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:9,padding:10}}>
+                <div style={{color:"#444",fontSize:9,textTransform:"uppercase",letterSpacing:1}}>{s.label}</div>
+                <div style={{color:s.color,fontSize:16,fontWeight:800,marginTop:2,fontFamily:"'Syne',sans-serif"}}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:11,marginBottom:11}}>
+            <p style={{color:"#555",fontSize:9,textTransform:"uppercase",letterSpacing:1.5,marginBottom:7}}>Questoes desta sessao</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              {history.map((h,i)=>(
+                <div key={i} style={{width:28,height:28,borderRadius:6,background:h.result==="correct"?`${COR}25`:"rgba(248,113,113,0.15)",border:`1px solid ${h.result==="correct"?COR:"#f87171"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>
+                  {h.result==="correct"?"✅":"❌"}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6,marginBottom:6}}>
+            <button onClick={startGame} style={{flex:1,padding:10,borderRadius:10,border:"none",background:GRAD,color:"#fff",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Syne',sans-serif"}}>🔄 Jogar Novamente</button>
+            <button onClick={()=>setScreen("menu")} style={{flex:1,padding:10,borderRadius:10,border:"1px solid rgba(255,255,255,0.08)",background:"transparent",color:"#555",fontSize:12,fontWeight:700,cursor:"pointer"}}>🏠 Menu</button>
+          </div>
+          <div style={{display:"flex",gap:6}}>
+            <button onClick={()=>doPrint({studentName,finalScore,correctCount,wrongCount,maxStreak,level,selTemas,history,TOTAL,date:sessionDate})} style={{flex:2,padding:10,borderRadius:10,border:`1px solid ${COR}30`,background:`${COR}08`,color:COR,fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Syne',sans-serif"}}>🖨️ Imprimir Resultado</button>
+            <button onClick={()=>setScreen("historico")} style={{flex:1,padding:10,borderRadius:10,border:"1px solid rgba(251,191,36,0.3)",background:"rgba(251,191,36,0.08)",color:"#fbbf24",fontSize:12,fontWeight:800,cursor:"pointer",fontFamily:"'Syne',sans-serif"}}>📊 Historico</button>
+          </div>
+        </div>
+        <Footer/>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{...base,paddingTop:10}}>
+      <div style={{width:"100%",maxWidth:480,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+        <div style={{display:"flex",gap:2}}>{[...Array(3)].map((_,i)=><span key={i} style={{fontSize:17,opacity:i<livesLeft?1:0.2}}>❤️</span>)}</div>
+        <div style={{textAlign:"center"}}>
+          <div style={{color:COR,fontSize:9,fontWeight:600,fontFamily:"'Syne',sans-serif"}}>👤 {studentName}</div>
+          <div style={{color:COR,fontSize:16,fontWeight:900,lineHeight:1,fontFamily:"'Syne',sans-serif",textShadow:`0 0 16px ${COR}60`}}>{score} pts</div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div style={{color:"#555",fontSize:11,fontWeight:700,fontFamily:"'Syne',sans-serif"}}>{round+1}/{TOTAL}</div>
+          <div style={{color:"#333",fontSize:9}}>rodada</div>
+        </div>
+      </div>
+      <div style={{width:"100%",maxWidth:480,height:4,background:"rgba(255,255,255,0.05)",borderRadius:99,marginBottom:8,overflow:"hidden"}}>
+        <div style={{height:"100%",width:`${timerPct}%`,background:timerCol,borderRadius:99,transition:"width 1s linear"}}/>
+      </div>
+      {streak>=2&&(
+        <div style={{background:`${COR}10`,border:`1px solid ${COR}25`,borderRadius:99,padding:"3px 12px",color:COR,fontSize:11,fontWeight:700,marginBottom:7,fontFamily:"'Syne',sans-serif"}}>
+          🔥 Sequencia: {streak}x {streak>=3?`· +${Math.floor(LEVELS[level].points*0.5)} bonus!`:""}
+        </div>
+      )}
+      {question&&(
+        <div style={{width:"100%",maxWidth:480,flex:1,display:"flex",flexDirection:"column"}}>
+          <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:6}}>
+            {tInfo&&(
+              <div style={{display:"inline-flex",alignItems:"center",gap:4,background:`${tInfo.color}12`,border:`1px solid ${tInfo.color}30`,borderRadius:99,padding:"2px 10px"}}>
+                <span style={{fontSize:12}}>{tInfo.emoji}</span>
+                <span style={{color:tInfo.color,fontSize:10,fontWeight:700,fontFamily:"'Syne',sans-serif"}}>{tInfo.label}</span>
+              </div>
+            )}
+            <div style={{marginLeft:"auto",color:timerCol,fontSize:13,fontWeight:800,fontFamily:"'Syne',sans-serif"}}>{timeLeft}s</div>
+          </div>
+          <div className={shake?"shake":""} style={{background:"rgba(255,255,255,0.04)",border:feedback==="correct"?`2px solid ${COR}`:feedback==="wrong"?`2px solid #f87171`:`1px solid rgba(255,255,255,0.07)`,borderRadius:18,padding:"16px 14px",marginBottom:9,textAlign:"center",transition:"border-color 0.3s",flex:1,display:"flex",flexDirection:"column",justifyContent:"center"}}>
+            <div style={{fontSize:32,marginBottom:8,filter:`drop-shadow(0 0 12px ${COR}50)`}}>{question.emoji}</div>
+            <p style={{color:"#ccc",fontSize:14,lineHeight:1.75,margin:"0 0 6px"}}>{question.enunciado}</p>
+            {question.dica&&!feedback&&<p style={{color:"#333",fontSize:11,fontStyle:"italic"}}>💡 {question.dica}</p>}
+            {feedback&&(
+              <div style={{marginTop:7,fontSize:12,fontWeight:700,color:feedback==="correct"?COR:"#f87171",fontFamily:"'Syne',sans-serif"}}>
+                {feedback==="correct"?"✅ Correto! Muito bem!":"❌ Resposta: "+question.resposta}
+              </div>
+            )}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:5}}>
+            {question.choices.map((c,i)=>{
+              const isC=String(c)===String(question.resposta);
+              let bg="rgba(255,255,255,0.04)",border="1px solid rgba(255,255,255,0.08)";
+              if(answered&&isC){bg=`${COR}20`;border=`2px solid ${COR}`;}
+              if(answered&&!isC){bg="rgba(248,113,113,0.06)";border="1px solid rgba(248,113,113,0.15)";}
+              return(
+                <button key={i} onClick={()=>handleAnswer(c)} disabled={answered}
+                  style={{padding:"14px 7px",borderRadius:12,border,background:bg,color:answered&&isC?COR:"#ccc",fontSize:17,fontWeight:900,cursor:answered?"default":"pointer",transition:"all 0.2s",fontFamily:"'Syne',sans-serif"}}>
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <Footer/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
